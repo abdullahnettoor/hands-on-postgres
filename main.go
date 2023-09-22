@@ -66,6 +66,16 @@ func insertMovie(db *sql.DB) {
 
 }
 
+func deleteMovie(db *sql.DB) {
+	var id string
+	fmt.Printf("Enter the movie id to delete: ")
+	fmt.Scan(&id)
+	_, err := db.Exec(`DELETE FROM movies WHERE movie_uid = $1`, id)
+	if err != nil {
+		fmt.Printf("Error deleting movie with %s \n Error is : %s\n", id, err)
+	}
+}
+
 func main() {
 
 	dbURI := fmt.Sprintf("host=%s port=%s database=%s sslmode=disable", host, port, database)
@@ -152,7 +162,9 @@ func main() {
 		return
 	}
 
-	insertMovie(db)
+	// insertMovie(db)
+
+	deleteMovie(db)
 
 	rows, err := db.Query(`
 	SELECT
