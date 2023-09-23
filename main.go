@@ -25,38 +25,38 @@ type Movie struct {
 var db *sql.DB
 var err error
 
-// var directorTable = `create table directors (
-// 	director_uid UUID NOT NULL PRIMARY KEY,
-// 	first_name VARCHAR(50) NOT NULL,
-// 	last_name VARCHAR(50),
+var directorTable = `create table if not exists directors (
+	director_uid UUID NOT NULL PRIMARY KEY,
+	first_name VARCHAR(50) NOT NULL,
+	last_name VARCHAR(50),
 
-// 	CONSTRAINT directors_name_unique UNIQUE (first_name, last_name)
-// );`
+	CONSTRAINT directors_name_unique UNIQUE (first_name, last_name)
+);`
 
-// var movieTable = `create table movies (
-// 	movie_uid UUID NOT NULL PRIMARY KEY,
-// 	title VARCHAR(250) NOT NULL,
-// 	genre VARCHAR(100) NOT NULL,
-// 	director UUID REFERENCES directors(director_uid),
-// 	released_on DATE NOT NULL,
-// 	gross NUMERIC(7, 2),
+var movieTable = `create table if not exists movies (
+	movie_uid UUID NOT NULL PRIMARY KEY,
+	title VARCHAR(250) NOT NULL,
+	genre VARCHAR(100) NOT NULL,
+	director UUID REFERENCES directors(director_uid),
+	released_on DATE NOT NULL,
+	gross NUMERIC(7, 2),
 
-// 	CONSTRAINT movie_unique UNIQUE (title, genre, released_on)
-// );`
+	CONSTRAINT movie_unique UNIQUE (title, genre, released_on)
+);`
 
 func insertMovie(db *sql.DB) {
 	m := Movie{}
 	fmt.Println("Enter Movie datas to insert")
-	fmt.Printf("Title\t:")
-	fmt.Scan(&m.Title)
-	fmt.Printf("Genre\t:")
-	fmt.Scan(&m.Genre)
+	fmt.Printf("Title\t: ")
+	fmt.Scanln(&m.Title)
+	fmt.Printf("Genre\t: ")
+	fmt.Scanln(&m.Genre)
 	fmt.Printf("Director\t:")
-	fmt.Scan(&m.Director)
+	fmt.Scanln(&m.Director)
 	fmt.Printf("Released_on\t:")
-	fmt.Scan(&m.Released_on)
+	fmt.Scanln(&m.Released_on)
 	fmt.Printf("Gross\t:")
-	fmt.Scan(&m.Gross)
+	fmt.Scanln(&m.Gross)
 
 	_, err = db.Exec(`INSERT INTO movies (movie_uid, title, genre, director, released_on, gross)
 					  VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5)`, m.Title, m.Genre, m.Director, m.Released_on, m.Gross)
@@ -76,6 +76,15 @@ func deleteMovie(db *sql.DB) {
 	}
 }
 
+// func updateMovie(db *sql.DB) {
+// 	var id string
+// 	fmt.Printf("Enter the ID to update movie: ")
+// 	fmt.Scan(&id)
+// 	_, err := db.Exec(`
+// UPDATE movies SET *
+// `)
+// }
+
 func main() {
 
 	dbURI := fmt.Sprintf("host=%s port=%s database=%s sslmode=disable", host, port, database)
@@ -87,16 +96,16 @@ func main() {
 	}
 	defer db.Close()
 
-	// _, err = db.Exec(directorTable)
-	// if err != nil {
-	// 	fmt.Println("Error Creating Director Table:", err)
-	// 	return
-	// }
-	// _, err = db.Exec(movieTable)
-	// if err != nil {
-	// 	fmt.Println("Error Creating Movie Table:", err)
-	// 	return
-	// }
+	_, err = db.Exec(directorTable)
+	if err != nil {
+		fmt.Println("Error Creating Director Table:", err)
+		return
+	}
+	_, err = db.Exec(movieTable)
+	if err != nil {
+		fmt.Println("Error Creating Movie Table:", err)
+		return
+	}
 
 	// // Add movies to db
 	// _, err = db.Exec(`
@@ -149,22 +158,24 @@ func main() {
 	// 	return
 	// }
 
-	// Update movies with random directors
-	_, err = db.Exec(`UPDATE movies
-	SET director = (
-		SELECT director_uid
-		FROM directors
-		ORDER BY random()
-		LIMIT 1
-	);`)
-	if err != nil {
-		fmt.Println("Error Updating directors in Movie Table:", err)
-		return
-	}
+	// // Update movies with random directors
+	// _, err = db.Exec(`UPDATE movies
+	// SET director = (
+	// 	SELECT director_uid
+	// 	FROM directors
+	// 	ORDER BY random()
+	// 	LIMIT 1
+	// );`)
+	// if err != nil {
+	// 	fmt.Println("Error Updating directors in Movie Table:", err)
+	// 	return
+	// }
 
-	// insertMovie(db)
+	insertMovie(db)
 
 	deleteMovie(db)
+
+	// updateMovie(db)
 
 	rows, err := db.Query(`
 	SELECT
@@ -189,7 +200,7 @@ func main() {
 			fmt.Println("Error fetching results:", err)
 			return
 		}
-		fmt.Printf("Movie %s: %sReleased on: %s\t Director: %s\t \t Gross: %s\n", no, title, released_on, director, gross)
+		fmt.Printf("Movie %s: %s\t Released on: %s\t Director: %s\tGross: %s\n", no, title, released_on, director, gross)
 	}
 
 	fmt.Println("----END----")
